@@ -114,9 +114,7 @@ export const protect = async (req, res, next) => {
 export const getUserByEmail = async (req, res, next) => {
   try {
     const { email } = req.params;
-    console.log("email", email);
     const user = await User.findOne({ email }).select("-password");
-    console.log("user", user);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.json({ user });
@@ -128,9 +126,84 @@ export const getUserByEmail = async (req, res, next) => {
 // Get all users (without passwords)
 export const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select("-password");
-    console.log(users);
+    const loggedInUserId = req.user.id;
+
+    const users = await User.find({ _id: { $ne: loggedInUserId } }).select(
+      "-password",
+    );
     res.json({ users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const { name, image } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (name) user.name = name;
+    if (image) user.image = image;
+    const updatedUser = await user.save();
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        image: updatedUser.image,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserRole = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user;
+    const { role, userId } = req.body;
+
+    if (loggedInUser.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can update roles" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true },
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUserById = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user;
+
+    if (loggedInUser.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can delete users" });
+    }
+
+    const { userId } = req.params;
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
   } catch (error) {
     next(error);
   }
