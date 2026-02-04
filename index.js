@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 
 import authRoutes from "./src/routes/authRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
+import wishlistRoutes from "./src/routes/wishlistRoutes.js";
+import addToCartRoutes from "./src/routes/addToCartRoutes.js";
 import { errorHandler, notFound } from "./src/middleware/errorMiddleware.js";
 import { connectDB } from "./src/config/db.js";
 
@@ -17,7 +19,7 @@ const app = express();
 // Middlewares
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://biz-cart-client.vercel.app/"],
+    origin: "http://localhost:5173",
     credentials: true,
   }),
 );
@@ -29,6 +31,8 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/wishlists", wishlistRoutes);
+app.use("/api/addToCarts", addToCartRoutes);
 
 // Error middlewares
 app.use(notFound);
