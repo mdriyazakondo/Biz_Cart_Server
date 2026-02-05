@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const addToCartSchema = new mongoose.Schema(
   {
+    productId: { type: String, required: true },
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },
     authorName: { type: String, required: true },
@@ -12,12 +13,12 @@ const addToCartSchema = new mongoose.Schema(
 
     unitPrice: {
       type: Number,
-      required: true, // 👈 single product price
+      required: true,
     },
 
     price: {
       type: Number,
-      required: true, // 👈 unitPrice * quantity
+      required: true,
     },
 
     productImage: { type: String },

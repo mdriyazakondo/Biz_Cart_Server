@@ -1,4 +1,5 @@
 import AddToCart from "../models/AddToCart/AddToCart.js";
+import Wishlist from "../models/wishlist/Wishlist.js";
 
 /* ===============================
    CREATE / ADD TO CART
@@ -6,6 +7,7 @@ import AddToCart from "../models/AddToCart/AddToCart.js";
 export const createAddToCart = async (req, res, next) => {
   try {
     const {
+      productId,
       userName,
       userEmail,
       authorName,
@@ -30,7 +32,6 @@ export const createAddToCart = async (req, res, next) => {
       productName,
     });
 
-    // ✅ যদি product আগে থেকেই থাকে
     if (existingItem) {
       existingItem.quantity += 1;
       existingItem.price = existingItem.unitPrice * existingItem.quantity;
@@ -43,19 +44,17 @@ export const createAddToCart = async (req, res, next) => {
       });
     }
 
-    // ✅ নতুন product হলে
     const AddToCartItem = new AddToCart({
+      productId,
       userName,
       userEmail,
       authorName,
       authorEmail,
       productName,
       description,
-
       unitPrice: price,
       quantity: quantity || 1,
       price: price * (quantity || 1),
-
       productImage,
       brand,
       category,
@@ -65,6 +64,7 @@ export const createAddToCart = async (req, res, next) => {
 
     await AddToCartItem.save();
 
+    console.log(AddToCartItem);
     res.status(201).json({
       message: "AddToCart item created successfully",
       AddToCartItem,
@@ -105,6 +105,94 @@ export const getAllAddToCart = async (req, res, next) => {
       count: totalQuantity,
       totalPrice,
       AddToCart: AddToCartItems,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// =================
+
+export const addToCartCreateManyData = async (req, res, next) => {
+  try {
+    const { userName, userEmail, products } = req.body;
+    console.log(products, "order");
+
+    if (
+      !userEmail ||
+      !products ||
+      !Array.isArray(products) ||
+      products.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "User email and products array are required",
+      });
+    }
+
+    const addedItems = [];
+
+    for (const product of products) {
+      const {
+        productId,
+        authorName,
+        authorEmail,
+        productName,
+        description,
+        price,
+        productImage,
+        brand,
+        category,
+        quantity,
+        sku,
+        status,
+      } = product;
+
+      if (!productName || !price || !category) continue;
+
+      let cartItem = await AddToCart.findOne({ userEmail, productName });
+
+      if (cartItem) {
+        cartItem.quantity += quantity || 1;
+        cartItem.price = cartItem.unitPrice * cartItem.quantity;
+        await cartItem.save();
+
+        await Wishlist.findOneAndDelete({ userEmail, productId });
+
+        addedItems.push(cartItem);
+        continue;
+      }
+
+      await Wishlist.findOneAndDelete({ userEmail, productId });
+
+     
+      const newCartItem = new AddToCart({
+        productId,
+        userName,
+        userEmail,
+        authorName,
+        authorEmail,
+        productName,
+        description,
+        unitPrice: price,
+        quantity: quantity || 1,
+        price: price * (quantity || 1),
+        productImage,
+        brand,
+        category,
+        sku,
+        status: status || "AddToCart",
+      });
+
+      await newCartItem.save();
+      addedItems.push(newCartItem);
+    }
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Products added to cart successfully (wishlist removed if existed)",
+      addedItems,
     });
   } catch (error) {
     next(error);

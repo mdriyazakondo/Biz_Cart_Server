@@ -3,6 +3,7 @@ import Wishlist from "../models/wishlist/Wishlist.js";
 export const createWishlist = async (req, res, next) => {
   try {
     const {
+      productId,
       userName,
       userEmail,
       authorName,
@@ -32,6 +33,7 @@ export const createWishlist = async (req, res, next) => {
     }
 
     const wishlistItem = new Wishlist({
+      productId,
       userName,
       userEmail,
       authorName,
