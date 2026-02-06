@@ -1,5 +1,5 @@
 import AddToCart from "../models/AddToCart/AddToCart.js";
-import Wishlist from "../models/wishlist/Wishlist.js";
+import Wishlist from "../models/Wishlist/Wishlist.js";
 
 /* ===============================
    CREATE / ADD TO CART
