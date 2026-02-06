@@ -106,3 +106,32 @@ export const deleteWishlist = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteManyData = async (req, res, next) => {
+  try {
+    const { userEmail } = req.params;
+
+    if (!userEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "User email is required",
+      });
+    }
+
+    const result = await Wishlist.deleteMany({ userEmail });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No wishlist items found for this user",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} wishlist item(s) deleted successfully`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

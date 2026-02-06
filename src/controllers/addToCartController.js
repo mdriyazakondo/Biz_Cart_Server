@@ -64,7 +64,6 @@ export const createAddToCart = async (req, res, next) => {
 
     await AddToCartItem.save();
 
-    console.log(AddToCartItem);
     res.status(201).json({
       message: "AddToCart item created successfully",
       AddToCartItem,
@@ -165,7 +164,6 @@ export const addToCartCreateManyData = async (req, res, next) => {
 
       await Wishlist.findOneAndDelete({ userEmail, productId });
 
-     
       const newCartItem = new AddToCart({
         productId,
         userName,
@@ -275,6 +273,35 @@ export const deleteAddToCart = async (req, res, next) => {
     res.status(200).json({
       message: "AddToCart deleted successfully",
       product: deletedItem,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteManyDataAddToCart = async (req, res, next) => {
+  try {
+    const { userEmail } = req.params;
+
+    if (!userEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "User email is required",
+      });
+    }
+
+    const result = await AddToCart.deleteMany({ userEmail });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No AddToCart items found for this user",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} AddToCart item(s) deleted successfully`,
     });
   } catch (error) {
     next(error);
