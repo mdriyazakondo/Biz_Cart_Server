@@ -8,6 +8,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import wishlistRoutes from "./src/routes/wishlistRoutes.js";
 import addToCartRoutes from "./src/routes/addToCartRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
 import { errorHandler, notFound } from "./src/middleware/errorMiddleware.js";
 import { connectDB } from "./src/config/db.js";
 
@@ -33,6 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/wishlists", wishlistRoutes);
 app.use("/api/addToCarts", addToCartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Error middlewares
 app.use(notFound);
