@@ -10,10 +10,98 @@ export const getProducts = async (req, res, next) => {
   }
 };
 
-export const trendingProduct = async (req, res, next) => {
+export const newProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ status: "Active" })
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const dayProducts = new Date();
+    dayProducts.setDate(dayProducts.getDate() - 30);
+    const filter = {
+      createdAt: { $gte: dayProducts },
+    };
+    const products = await Product.find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Product.countDocuments(filter);
+    res.status(200).json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+export const bestProducts = async (req, res, next) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      status: "Active",
+      quantity: { $gt: 10 },
+      $or: [{ featured: true }, { discountPrice: { $gt: 25 } }],
+    };
+    const products = await Product.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Product.countDocuments(filter);
+    res.status(200).json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const CategoryProducts = async (req, res, next) => {
+  try {
+    const { category } = req.query;
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        message: "Category query is required",
+      });
+    }
+
+    const products = await Product.find({
+      category: { $regex: new RegExp(`^${category}$`, "i") },
+    }).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const trendingProduct = async (req, res, next) => {
+  const tenDaysAgo = new Date();
+  tenDaysAgo.setDate(tenDaysAgo.getDate() - 30);
+  try {
+    const products = await Product.find({
+      status: "Active",
+      discountPrice: { $gt: 50 },
+      createdAt: { $gte: tenDaysAgo },
+    })
+      .sort({ createdAt: -1 })
+
       .limit(5);
 
     res.status(200).json(products);
@@ -23,10 +111,13 @@ export const trendingProduct = async (req, res, next) => {
 };
 
 export const featuredProducts = async (req, res, next) => {
+  const tenDaysAgo = new Date();
+  tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
   try {
     const products = await Product.find({
       status: "Active",
       featured: true,
+      createdAt: { $gte: tenDaysAgo },
     }).limit(5);
     res.status(200).json(products);
   } catch (error) {
