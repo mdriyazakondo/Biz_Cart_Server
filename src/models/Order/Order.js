@@ -7,6 +7,8 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    userEmail: { type: String, required: true },
+    userName: { type: String, required: true },
     products: [
       {
         productId: {
@@ -16,7 +18,9 @@ const orderSchema = new mongoose.Schema(
         },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
-        // image: { type: String, required: true },
+        authorEmail: { type: String, required: true },
+        authorName: { type: String, required: true },
+        productName: { type: String, required: true },
       },
     ],
     totalAmount: { type: Number, required: true },

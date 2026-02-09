@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Order from "../models/Order/Order.js";
 import AddToCart from "../models/AddToCart/AddToCart.js";
 import User from "../models/User/User.js";
+import Product from "../models/Product/Product.js";
 
 export const createOrder = async (req, res, next) => {
   try {
@@ -15,31 +16,44 @@ export const createOrder = async (req, res, next) => {
       return res.status(400).json({ message: "Products required" });
     }
 
-    // 🔥 prevent duplicate product order (same user)
-    const productIds = data.products.map((p) => p.productId);
+    for (let item of data.products) {
+      const product = await Product.findById(item.productId);
 
-    const alreadyOrdered = await Order.findOne({
-      userId: data.userId,
-      "products.productId": { $in: productIds },
-    });
+      if (!product) {
+        return res
+          .status(404)
+          .json({ message: `Product not found: ${item.productId}` });
+      }
 
-    if (alreadyOrdered) {
-      return res.status(400).json({
-        message: "This product is already ordered by you",
-      });
+      if (product.quantity < item.quantity) {
+        return res.status(400).json({
+          message: `Not enough stock for ${product.name}. Available: ${product.quantity}`,
+        });
+      }
+
+      product.quantity -= item.quantity;
+
+      if (product.quantity <= 0) {
+        await Product.findByIdAndDelete(product._id);
+      } else {
+        await product.save();
+      }
     }
 
+    // 🔹 Create order
     const newOrder = new Order(data);
     const savedOrder = await newOrder.save();
 
+    // 🔹 Clear user's cart
     await AddToCart.deleteMany({ userId: data.userId });
 
     res.status(201).json({
       success: true,
-      message: "Order placed & cart cleared",
+      message: "Order placed, stock updated & cart cleared",
       data: savedOrder,
     });
   } catch (error) {
+    console.error("Create order error:", error.message);
     next(error);
   }
 };
@@ -72,7 +86,7 @@ export const userAllOrder = async (req, res, next) => {
 export const updatePayOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { paymentStatus, status } = req.body;
+    let { paymentStatus, status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid order id" });
@@ -95,12 +109,16 @@ export const updatePayOrder = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid order status" });
     }
 
-    // 🔹 update
+    // 🔥 MAIN LOGIC
+    if (status === "Delivered") {
+      paymentStatus = "Paid";
+    }
+
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       {
-        ...(paymentStatus && { paymentStatus }),
         ...(status && { status }),
+        ...(paymentStatus && { paymentStatus }),
       },
       { new: true },
     );
@@ -116,6 +134,27 @@ export const updatePayOrder = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Order update error:", error.message);
+    next(error);
+  }
+};
+
+export const myProductOrder = async (req, res, next) => {
+  try {
+    const { sellerEmail } = req.params;
+    console.log("SELLER:", sellerEmail);
+
+    const orders = await Order.find({
+      "products.authorEmail": sellerEmail,
+    })
+      .populate("products.productId", "name price image")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+  } catch (error) {
     next(error);
   }
 };

@@ -19,9 +19,7 @@ const app = express();
 // Middlewares
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "https://biz-cart-client.vercel.app",
-
+    origin: ["http://localhost:5173", "https://biz-cart-client.vercel.app"],
     credentials: true,
   }),
 );

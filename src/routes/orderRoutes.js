@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createOrder,
+  myProductOrder,
   orderDelete,
   updatePayOrder,
   userAllOrder,
@@ -9,8 +10,9 @@ import {
 const router = express.Router();
 
 router.get("/user/:userEmail", userAllOrder);
+router.get("/my-products-order/:sellerEmail", myProductOrder);
 router.post("/", createOrder);
-router.put("/", updatePayOrder);
+router.put("/:id", updatePayOrder);
 router.delete("/:orderId", orderDelete);
 
 export default router;
