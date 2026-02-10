@@ -8,6 +8,7 @@ import {
   getProductById,
   getProducts,
   newProducts,
+  sellerProducts,
   trendingProduct,
   updateProduct,
 } from "../controllers/productController.js";
@@ -19,6 +20,7 @@ const router = express.Router();
 router.get("/", getProducts);
 router.get("/newProducts", newProducts);
 router.get("/bestProducts", bestProducts);
+router.get("/seller-products", sellerProducts);
 router.get("/category", CategoryProducts);
 router.get("/trending", trendingProduct);
 router.get("/featured", featuredProducts);

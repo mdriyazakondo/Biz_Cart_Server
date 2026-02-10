@@ -9,6 +9,17 @@ export const getProducts = async (req, res, next) => {
     next(error);
   }
 };
+export const sellerProducts = async (req, res, next) => {
+  try {
+    const { sellerEmail } = req.params;
+    const products = await Product.find({ authorEmail: sellerEmail }).sort({
+      createdAt: -1,
+    });
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const newProducts = async (req, res, next) => {
   try {
